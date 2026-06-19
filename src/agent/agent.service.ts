@@ -1,4 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { createAgent, initChatModel, tool } from 'langchain';
 import { MemorySaver } from '@langchain/langgraph';
 import * as z from 'zod';
@@ -8,13 +9,16 @@ import { KnowledgeService } from './knowledge.service';
 export class AgentService implements OnModuleInit {
   private agent: Awaited<ReturnType<typeof createAgent>>;
 
-  constructor(private readonly knowledge: KnowledgeService) {}
+  constructor(
+    private readonly knowledge: KnowledgeService,
+    private readonly config: ConfigService,
+  ) {}
 
   async onModuleInit() {
     const model = await initChatModel('openai:glm-4.7-flash', {
       temperature: 0.5,
       maxTokens: 4096,
-      apiKey: process.env.ZHIPU_API_KEY,
+      apiKey: this.config.get('ZHIPU_API_KEY'),
       configuration: {
         baseURL: 'https://open.bigmodel.cn/api/paas/v4/',
       },
@@ -61,7 +65,7 @@ export class AgentService implements OnModuleInit {
     this.agent = createAgent({
       model,
       tools: [getWeather, getTime, searchKnowledge],
-      systemPrompt: 'Reply in Chinese. CRITICAL: Always call search_knowledge first before answering any knowledge-related question. Do NOT rely on your own memory.',
+      systemPrompt: 'Reply in Chinese. Use search_knowledge when the question involves NestJS, LangChain, Agent, or RAG concepts. For simple greetings, weather, or time queries, answer directly.',
       checkpointer: new MemorySaver(),
     });
   }
@@ -76,5 +80,23 @@ export class AgentService implements OnModuleInit {
     return typeof lastMsg?.content === 'string'
       ? lastMsg.content
       : JSON.stringify(lastMsg?.content);
+  }
+
+  async *streamChat(content: string, threadId = 'default') {
+    const stream = await this.agent.stream(
+      { messages: [{ role: 'user', content }] },
+      { configurable: { thread_id: threadId }, streamMode: 'messages' },
+    );
+
+    for await (const [msg] of stream) {
+      if (msg?.content) {
+        yield { type: 'chunk', content: msg.content };
+      } else if ((msg as any)?.tool_calls?.length) {
+        const names = (msg as any).tool_calls.map((t: any) => t.name).join(', ');
+        yield { type: 'status', content: `正在调用工具: ${names}` };
+      }
+    }
+
+    yield { type: 'done' };
   }
 }

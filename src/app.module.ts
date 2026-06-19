@@ -1,12 +1,14 @@
 import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CatsModule } from './cats/cats.module';
 import { AgentModule } from './agent/agent.module';
+import { RagModule } from './rag/rag.module';
 import { LoggerMiddleware } from './common/middleware/logger.middleware';
 
 @Module({
-  imports: [CatsModule, AgentModule],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), CatsModule, AgentModule, RagModule.register()],
   controllers: [AppController],
   providers: [AppService],
 })

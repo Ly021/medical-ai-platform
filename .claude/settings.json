@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -N -s -X POST http://localhost:3000/agent/chat/stream -H \"Content-Type: application/json\" -d '{\"message\":\"北京天气怎么样\"}' --max-time 60)",
+      "Bash(npx tsc *)",
+      "Bash(node -e \"const m = require\\('@langchain/community'\\); console.log\\(Object.keys\\(m\\).filter\\(k=>k.toLowerCase\\(\\).includes\\('text'\\)||k.toLowerCase\\(\\).includes\\('pdf'\\)||k.toLowerCase\\(\\).includes\\('load'\\)\\).join\\('\\\\n'\\)\\)\")",
+      "Bash(curl -s http://localhost:6333/health)",
+      "Bash(curl -s -X POST http://localhost:3000/rag/ingest -H \"Content-Type: application/json\" -d '{\"source\":\"data/knowledge.txt\"}')",
+      "Bash(curl -s -X POST http://localhost:3000/rag/search -H \"Content-Type: application/json\" -d '{\"query\":\"NestJS依赖注入\"}')",
+      "Bash(curl -s -X POST http://localhost:3000/rag/query -H \"Content-Type: application/json\" -d '{\"question\":\"什么是RAG\"}' --max-time 60)",
+      "Bash(curl -N -s -X POST http://localhost:3000/rag/query/stream -H \"Content-Type: application/json\" -d '{\"question\":\"LangChain是什么\"}' --max-time 60)",
+      "Bash(npx nest *)",
+      "Bash(tee /tmp/nest_output.log)",
+      "Read(//tmp/**)",
+      "Bash(curl -s -X POST http://localhost:3000/rag/search -H \"Content-Type: application/json\" -d '{\"query\":\"test\"}')",
+      "Bash(npx kill-port *)",
+      "Bash(node dist/main.js)",
+      "Bash(netstat -ano)",
+      "Bash(findstr :3000)",
+      "Bash(taskkill /PID 5464 /F)",
+      "Bash(cmd //c \"taskkill /PID 5464 /F\")",
+      "Bash(curl -s -X POST http://localhost:3000/rag/query -H \"Content-Type: application/json\" -d '{\"question\":\"什么是RAG\"}' --max-time 120)",
+      "Bash(curl -N -s -X POST http://localhost:3000/rag/query/stream -H \"Content-Type: application/json\" -d '{\"question\":\"NestJS模块系统是什么\"}' --max-time 120)",
+      "Bash(npx jest *)"
+    ]
+  }
+}

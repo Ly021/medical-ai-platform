@@ -1,4 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 import { OpenAIEmbeddings } from '@langchain/openai';
 import * as fs from 'fs';
@@ -14,7 +15,14 @@ export class KnowledgeService implements OnModuleInit {
   private chunks: DocChunk[] = [];
   private embeddings: OpenAIEmbeddings;
 
+  constructor(private readonly config: ConfigService) {}
+
   async onModuleInit() {
+    // OpenAI SDK 会检查 OPENAI_API_KEY 环境变量，占位绕过
+    if (!process.env.OPENAI_API_KEY) {
+      process.env.OPENAI_API_KEY = 'placeholder';
+    }
+
     const filePath = path.resolve('data/knowledge.txt');
     const text = fs.readFileSync(filePath, 'utf-8');
 
@@ -26,7 +34,8 @@ export class KnowledgeService implements OnModuleInit {
 
     this.embeddings = new OpenAIEmbeddings({
       model: 'embedding-2',
-      apiKey: process.env.ZHIPU_API_KEY,
+      apiKey: this.config.get('ZHIPU_API_KEY'),
+      timeout: 15_000,
       configuration: {
         baseURL: 'https://open.bigmodel.cn/api/paas/v4/',
       },
