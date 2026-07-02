@@ -8,13 +8,20 @@ import { KnowledgeService } from './knowledge.service';
 @Injectable()
 export class AgentService implements OnModuleInit {
   private agent: Awaited<ReturnType<typeof createAgent>>;
+  private initPromise: Promise<void>;
 
   constructor(
     private readonly knowledge: KnowledgeService,
     private readonly config: ConfigService,
   ) {}
 
-  async onModuleInit() {
+  onModuleInit() {
+    this.initPromise = this.initAgent().catch((err) => {
+      console.error('[AgentService] Agent 初始化失败:', err);
+    });
+  }
+
+  private async initAgent() {
     const model = await initChatModel('openai:glm-4.7-flash', {
       temperature: 0.5,
       maxTokens: 4096,
@@ -68,9 +75,12 @@ export class AgentService implements OnModuleInit {
       systemPrompt: 'Reply in Chinese. Use search_knowledge when the question involves NestJS, LangChain, Agent, or RAG concepts. For simple greetings, weather, or time queries, answer directly.',
       checkpointer: new MemorySaver(),
     });
+
+    console.log('[AgentService] Agent 初始化完成');
   }
 
   async chat(content: string, threadId = 'default'): Promise<string> {
+    if (!this.agent) return 'AI 服务正在初始化中，请稍后重试。';
     const result = await this.agent.invoke(
       { messages: [{ role: 'user', content }] },
       { configurable: { thread_id: threadId } },
@@ -83,6 +93,10 @@ export class AgentService implements OnModuleInit {
   }
 
   async *streamChat(content: string, threadId = 'default') {
+    if (!this.agent) {
+      yield { type: 'error', content: 'AI 服务正在初始化中，请稍后重试。' };
+      return;
+    }
     const stream = await this.agent.stream(
       { messages: [{ role: 'user', content }] },
       { configurable: { thread_id: threadId }, streamMode: 'messages' },

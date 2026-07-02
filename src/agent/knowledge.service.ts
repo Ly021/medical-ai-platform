@@ -17,8 +17,13 @@ export class KnowledgeService implements OnModuleInit {
 
   constructor(private readonly config: ConfigService) {}
 
-  async onModuleInit() {
-    // OpenAI SDK 会检查 OPENAI_API_KEY 环境变量，占位绕过
+  onModuleInit() {
+    this.init().catch((err) => {
+      console.error('[KnowledgeService] 知识库初始化失败:', err);
+    });
+  }
+
+  private async init() {
     if (!process.env.OPENAI_API_KEY) {
       process.env.OPENAI_API_KEY = 'placeholder';
     }

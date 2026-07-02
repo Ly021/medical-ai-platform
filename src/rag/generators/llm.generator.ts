@@ -27,8 +27,8 @@ export class LlmGenerator implements IGenerator, OnModuleInit {
 
   constructor(private readonly config: ConfigService) {}
 
-  /** 模块初始化时创建模型实例（异步，因为需要读配置） */
-  async onModuleInit() {
+  /** 模块初始化时创建模型实例 */
+  onModuleInit() {
     this.model = new ChatOpenAI({
       model: this.config.get<string>('LLM_MODEL', 'glm-4.7-flash'),
       temperature: this.config.get<number>('LLM_TEMPERATURE', 0.3),

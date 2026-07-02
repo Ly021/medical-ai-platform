@@ -39,8 +39,10 @@ export class QdrantVectorStore implements IVectorStore, OnModuleInit {
    * 模块初始化时自动执行 —— 确保 Qdrant 中已存在目标 collection。
    * 如果不存在则自动创建，已存在则复用。
    */
-  async onModuleInit() {
-    await this.ensureCollection(this.collectionName, this.embedder.dimensions);
+  onModuleInit() {
+    this.ensureCollection(this.collectionName, this.embedder.dimensions).catch((err) => {
+      console.error('[QdrantVectorStore] 初始化失败:', err);
+    });
   }
 
   async ensureCollection(_collectionName: string, _vectorSize: number): Promise<void> {

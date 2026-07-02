@@ -1,17 +1,42 @@
-import { Controller, Post, Body, Res } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Res,
+  UseInterceptors,
+  UploadedFile,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
+import { ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { diskStorage } from 'multer';
+import { extname, join } from 'path';
+import { mkdirSync, unlinkSync, existsSync } from 'fs';
 import { PipelineService } from './pipeline/pipeline.service';
 import { IngestDto } from './dto/ingest.dto';
 import { SearchDto } from './dto/search.dto';
 import { QueryDto } from './dto/query.dto';
 
+// @types/multer 未安装，自行声明文件类型
+interface UploadedFileType {
+  fieldname: string;
+  originalname: string;
+  encoding: string;
+  mimetype: string;
+  size: number;
+  path: string;
+}
+
 /**
  * RAG HTTP 控制器
  *
- * 对外暴露 4 个 REST 端点，所有路由前缀为 /rag：
+ * 对外暴露 5 个 REST 端点，所有路由前缀为 /rag：
  *
- *   POST /rag/ingest       — 文档入库
- *   POST /rag/search       — 纯检索（返回文档原文片段）
+ *   POST /rag/ingest        — 文档入库（传文件路径）
+ *   POST /rag/ingest/upload — 文档入库（上传文件）
+ *   POST /rag/search        — 纯检索（返回文档原文片段）
  *   POST /rag/query        — RAG 问答（非流式）
  *   POST /rag/query/stream — RAG 问答（SSE 流式，逐字推送）
  */
@@ -24,6 +49,64 @@ export class RagController {
   async ingest(@Body() dto: IngestDto) {
     const result = await this.pipeline.ingest(dto.source);
     return { success: true, ...result };
+  }
+
+  /** 文件上传入库：接收上传的文件，保存到临时目录后入库，处理完自动清理 */
+  @Post('ingest/upload')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: (_req, _file, cb) => {
+          const dir = join(process.cwd(), 'uploads');
+          if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+          cb(null, dir);
+        },
+        filename: (_req, file, cb) => {
+          const name = `${Date.now()}-${Math.round(Math.random() * 1e9)}${extname(file.originalname)}`;
+          cb(null, name);
+        },
+      }),
+    }),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary', description: '文档文件 (.txt/.md/.pdf)' },
+      },
+    },
+  })
+  async ingestUpload(@UploadedFile() file: UploadedFileType) {
+    const allowed = ['.txt', '.md', '.pdf'];
+
+    if (!file) {
+      throw new HttpException(
+        `请上传文件（字段名: file），仅支持 ${allowed.join(', ')} 格式`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const ext = extname(file.originalname).toLowerCase();
+    if (!allowed.includes(ext)) {
+      // 删除已保存的无效文件
+      if (file.path && existsSync(file.path)) {
+        unlinkSync(file.path);
+      }
+      throw new HttpException(
+        `不支持的文件类型 "${ext}"，仅支持 ${allowed.join(', ')}`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    try {
+      const result = await this.pipeline.ingest(file.path);
+      return { success: true, fileName: file.originalname, ...result };
+    } finally {
+      if (file?.path && existsSync(file.path)) {
+        unlinkSync(file.path);
+      }
+    }
   }
 
   /** 纯检索：只搜不生成，返回文档片段 */

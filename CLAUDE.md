@@ -27,7 +27,7 @@ npm run format        # Prettier 格式化
 ### 目录结构
 
 ```
-nest_demo/
+medical-assistant-server/
 ├── src/
 │   ├── main.ts                      # 入口文件，创建 Nest 应用并监听 3000 端口
 │   ├── app.module.ts                # 根模块，注册所有子模块和中间件
