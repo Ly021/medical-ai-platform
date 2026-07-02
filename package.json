@@ -1,0 +1,23 @@
+{
+  "name": "medical-ai-platform",
+  "private": true,
+  "workspaces": [
+    "medical-assistant-server",
+    "medical-assistant-web"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c blue,green \"npm run dev -w medical-assistant-server\" \"npm run dev -w medical-assistant-web\"",
+    "dev:api": "npm run start:dev -w medical-assistant-server",
+    "dev:web": "npm run dev -w medical-assistant-web",
+    "build": "npm run build -ws",
+    "build:api": "npm run build -w medical-assistant-server",
+    "build:web": "npm run build -w medical-assistant-web",
+    "lint": "npm run lint -ws",
+    "test": "npm run test -w medical-assistant-server",
+    "test:e2e": "npm run test:e2e -w medical-assistant-server"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.7.3"
+  }
+}
