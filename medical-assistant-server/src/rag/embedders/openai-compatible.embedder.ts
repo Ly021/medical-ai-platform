@@ -7,13 +7,13 @@ import type { IEmbedder } from '../interfaces/embedder.interface';
  * OpenAI 兼容协议的向量化器
  *
  * 虽然叫 OpenAIEmbeddings，实际可以对接任何 OpenAI 兼容的 embedding API。
- * 本项目默认连接智谱（Zhipu）的 embedding-2 模型（1024 维）。
+ * 本项目默认连接阿里云百炼的 text-embedding-v2 模型（1536 维）。
  *
  * timeout 设为 15 秒，防止网络异常时长时间挂起。
  *
  * 环境变量：
- * - EMBEDDING_MODEL: 模型名（默认 embedding-2）
- * - EMBEDDING_BASE_URL: API 地址（默认智谱地址）
+ * - EMBEDDING_MODEL: 模型名（默认 text-embedding-v2）
+ * - EMBEDDING_BASE_URL: API 地址（默认百炼地址）
  * - EMBEDDING_DIMENSIONS: 向量维度（默认 1024）
  */
 @Injectable()
@@ -24,11 +24,11 @@ export class OpenAICompatibleEmbedder implements IEmbedder {
   private readonly embeddings: OpenAIEmbeddings;
 
   constructor(private readonly config: ConfigService) {
-    const model = this.config.get<string>('EMBEDDING_MODEL', 'embedding-2');
-    const apiKey = this.config.get<string>('ZHIPU_API_KEY');
+    const model = this.config.get<string>('EMBEDDING_MODEL', 'text-embedding-v2');
+    const apiKey = this.config.get<string>('DASHSCOPE_API_KEY');
     const baseURL = this.config.get<string>(
       'EMBEDDING_BASE_URL',
-      'https://open.bigmodel.cn/api/paas/v4/',
+      'https://dashscope.aliyuncs.com/compatible-mode/v1',
     );
 
     this.embeddings = new OpenAIEmbeddings({
@@ -38,7 +38,7 @@ export class OpenAICompatibleEmbedder implements IEmbedder {
       configuration: { baseURL },
     });
 
-    this.dimensions = this.config.get<number>('EMBEDDING_DIMENSIONS', 1024);
+    this.dimensions = this.config.get<number>('EMBEDDING_DIMENSIONS', 1536);
   }
 
   /** 批量向量化 —— 入库时把多个文档段落一次性转为向量 */

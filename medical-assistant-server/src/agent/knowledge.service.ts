@@ -38,11 +38,11 @@ export class KnowledgeService implements OnModuleInit {
     const docs = await splitter.createDocuments([text]);
 
     this.embeddings = new OpenAIEmbeddings({
-      model: 'embedding-2',
-      apiKey: this.config.get('ZHIPU_API_KEY'),
+      model: 'text-embedding-v2',
+      apiKey: this.config.get('DASHSCOPE_API_KEY'),
       timeout: 15_000,
       configuration: {
-        baseURL: 'https://open.bigmodel.cn/api/paas/v4/',
+        baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
       },
     });
 

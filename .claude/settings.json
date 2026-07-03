@@ -31,7 +31,10 @@
       "Bash(git config *)",
       "Bash(git rm *)",
       "Bash(rm -rf medical-assistant-server/.git medical-assistant-web/.git)",
-      "Bash(cd \"d:/test/medical-ai-platform\" && git rm --cached -f medical-assistant-server medical-assistant-web && rm -rf medical-assistant-server/.git medical-assistant-web/.git && git add -A && git status)"
+      "Bash(cd \"d:/test/medical-ai-platform\" && git rm --cached -f medical-assistant-server medical-assistant-web && rm -rf medical-assistant-server/.git medical-assistant-web/.git && git add -A && git status)",
+      "Bash(gh auth *)",
+      "Bash(git remote *)",
+      "Bash(git push *)"
     ],
     "additionalDirectories": [
       "d:\\test\\medical-assistant-server",

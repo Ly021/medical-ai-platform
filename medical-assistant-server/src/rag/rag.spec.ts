@@ -56,10 +56,10 @@ const mockConfig = {
       RAG_CHUNK_OVERLAP: 50,
       RAG_RETRIEVAL_K: 4,
       RAG_HYBRID_ALPHA: 0.7,
-      EMBEDDING_MODEL: 'embedding-2',
-      ZHIPU_API_KEY: 'test-key',
+      EMBEDDING_MODEL: 'text-embedding-v2',
+      DASHSCOPE_API_KEY: 'test-key',
       EMBEDDING_BASE_URL: 'https://test.api',
-      EMBEDDING_DIMENSIONS: 1024,
+      EMBEDDING_DIMENSIONS: 1536,
     };
     return vals[key] ?? def;
   }),

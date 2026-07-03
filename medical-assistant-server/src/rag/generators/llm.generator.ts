@@ -8,14 +8,14 @@ import type { IGenerator } from '../interfaces/generator.interface';
  * LLM 生成器
  *
  * 把"用户问题 + 检索到的参考文档"组装成 prompt，调用大模型生成回答。
- * 默认使用智谱 GLM-4.7-Flash（通过 OpenAI 兼容协议）。
+ * 默认使用阿里云百炼 qwen-turbo（通过 OpenAI 兼容协议）。
  *
  * 两种模式：
  * - generate(): 等模型输出完毕一次性返回
  * - generateStream(): 逐 token 流式输出（配合 SSE 推送给前端）
  *
  * 环境变量：
- * - LLM_MODEL: 模型名（默认 glm-4.7-flash）
+ * - LLM_MODEL: 模型名（默认 qwen-turbo）
  * - LLM_TEMPERATURE: 温度（默认 0.3，越低越确定性）
  * - LLM_BASE_URL: API 地址
  */
@@ -30,13 +30,13 @@ export class LlmGenerator implements IGenerator, OnModuleInit {
   /** 模块初始化时创建模型实例 */
   onModuleInit() {
     this.model = new ChatOpenAI({
-      model: this.config.get<string>('LLM_MODEL', 'glm-4.7-flash'),
+      model: this.config.get<string>('LLM_MODEL', 'qwen-turbo'),
       temperature: this.config.get<number>('LLM_TEMPERATURE', 0.3),
-      apiKey: this.config.get<string>('ZHIPU_API_KEY'),
+      apiKey: this.config.get<string>('DASHSCOPE_API_KEY'),
       configuration: {
         baseURL: this.config.get<string>(
           'LLM_BASE_URL',
-          'https://open.bigmodel.cn/api/paas/v4/',
+          'https://dashscope.aliyuncs.com/compatible-mode/v1',
         ),
       },
     });

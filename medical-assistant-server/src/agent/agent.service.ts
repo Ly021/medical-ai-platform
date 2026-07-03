@@ -4,6 +4,7 @@ import { createAgent, initChatModel, tool } from 'langchain';
 import { MemorySaver } from '@langchain/langgraph';
 import * as z from 'zod';
 import { KnowledgeService } from './knowledge.service';
+import { PromptService } from './prompt.service';
 
 @Injectable()
 export class AgentService implements OnModuleInit {
@@ -13,6 +14,7 @@ export class AgentService implements OnModuleInit {
   constructor(
     private readonly knowledge: KnowledgeService,
     private readonly config: ConfigService,
+    private readonly prompt: PromptService,
   ) {}
 
   onModuleInit() {
@@ -22,12 +24,12 @@ export class AgentService implements OnModuleInit {
   }
 
   private async initAgent() {
-    const model = await initChatModel('openai:glm-4.7-flash', {
+    const model = await initChatModel('openai:qwen-turbo', {
       temperature: 0.5,
       maxTokens: 4096,
-      apiKey: this.config.get('ZHIPU_API_KEY'),
+      apiKey: this.config.get('DASHSCOPE_API_KEY'),
       configuration: {
-        baseURL: 'https://open.bigmodel.cn/api/paas/v4/',
+        baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
       },
     });
 
@@ -72,7 +74,7 @@ export class AgentService implements OnModuleInit {
     this.agent = createAgent({
       model,
       tools: [getWeather, getTime, searchKnowledge],
-      systemPrompt: 'Reply in Chinese. Use search_knowledge when the question involves NestJS, LangChain, Agent, or RAG concepts. For simple greetings, weather, or time queries, answer directly.',
+      systemPrompt: this.prompt.get('system'),
       checkpointer: new MemorySaver(),
     });
 

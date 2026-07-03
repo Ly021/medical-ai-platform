@@ -474,9 +474,9 @@ RagModule.register({
 
 | 参数 | 环境变量 | 默认值 |
 |------|----------|--------|
-| 智谱 API Key | `ZHIPU_API_KEY` | 必须自己填 |
-| Embedding 模型 | `EMBEDDING_MODEL` | `embedding-2` |
-| LLM 模型 | `LLM_MODEL` | `glm-4.7-flash` |
+| 百炼 API Key | `DASHSCOPE_API_KEY` | 必须自己填 |
+| Embedding 模型 | `EMBEDDING_MODEL` | `text-embedding-v2` |
+| LLM 模型 | `LLM_MODEL` | `qwen-turbo` |
 | LLM 温度 | `LLM_TEMPERATURE` | `0.3` |
 
 ---
