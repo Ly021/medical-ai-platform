@@ -1,17 +1,17 @@
 import { Controller, Post, Body, Res } from '@nestjs/common';
 import type { Response } from 'express';
-import { AgentService } from './agent.service';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { AgentService } from './agent.service.js';
+import { ChatDto } from './dto/chat.dto.js';
 
-class ChatDto {
-  message: string;
-  threadId?: string;
-}
-
+@ApiTags('Agent')
 @Controller('agent')
 export class AgentController {
   constructor(private readonly agentService: AgentService) {}
 
   @Post('chat')
+  @ApiOperation({ summary: '发送消息（非流式）' })
+  @ApiResponse({ status: 200, description: '返回AI回复' })
   async chat(@Body() dto: ChatDto): Promise<{ reply: string }> {
     if (!dto?.message) {
       return { reply: '请提供 message 字段' };
@@ -21,6 +21,8 @@ export class AgentController {
   }
 
   @Post('chat/stream')
+  @ApiOperation({ summary: '发送消息（SSE流式）' })
+  @ApiResponse({ status: 200, description: 'SSE事件流' })
   async chatStream(@Body() dto: ChatDto, @Res() res: Response) {
     if (!dto?.message) {
       res.status(400).json({ error: '请提供 message 字段' });

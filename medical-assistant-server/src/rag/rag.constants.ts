@@ -58,3 +58,11 @@ export interface QueryResult {
   answer: string;         // 大模型生成的回答
   sources: Document[];    // 引用的参考文档
 }
+
+/** 已入库文档的聚合信息（按 source 分组） */
+export interface DocumentInfo {
+  source: string;    // 文件完整路径
+  filename: string;  // 纯文件名（从路径中提取）
+  chunks: number;    // 分段数量
+  ids: string[];     // 所有分段 ID（用于删除）
+}

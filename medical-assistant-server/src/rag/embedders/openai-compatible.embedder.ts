@@ -34,7 +34,8 @@ export class OpenAICompatibleEmbedder implements IEmbedder {
     this.embeddings = new OpenAIEmbeddings({
       model,
       apiKey,
-      timeout: 15_000, // 15 秒超时，避免网络问题导致请求挂死
+      timeout: 15_000,
+      batchSize: 25, // DashScope 限制单批最多 25 条
       configuration: { baseURL },
     });
 

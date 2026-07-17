@@ -1,6 +1,7 @@
 import { Injectable, Inject, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { QdrantVectorStore as LangChainQdrant } from '@langchain/qdrant';
+import { QdrantClient } from '@qdrant/js-client-rest';
 import type { Document } from '../rag.constants';
 import { EMBEDDER_TOKEN } from '../rag.constants';
 import type { IVectorStore } from '../interfaces/vector-store.interface';
@@ -24,6 +25,7 @@ export class QdrantVectorStore implements IVectorStore, OnModuleInit {
   readonly name = 'qdrant';
 
   private store: LangChainQdrant;
+  private client: QdrantClient;
   private readonly collectionName: string;
   private readonly url: string;
 
@@ -46,6 +48,7 @@ export class QdrantVectorStore implements IVectorStore, OnModuleInit {
   }
 
   async ensureCollection(_collectionName: string, _vectorSize: number): Promise<void> {
+    this.client = new QdrantClient({ url: this.url });
     try {
       // 尝试连接已有 collection
       this.store = await LangChainQdrant.fromExistingCollection(
@@ -77,6 +80,19 @@ export class QdrantVectorStore implements IVectorStore, OnModuleInit {
     // Qdrant 的 similaritySearchVectorWithScore 返回 [Document, number] 元组
     const results = await this.store.similaritySearchVectorWithScore(embedding, k, filter);
     return results.map(([doc]) => doc);
+  }
+
+  async getAllDocuments(): Promise<Array<{ id: string; metadata: Record<string, unknown> }>> {
+    if (!this.client) return [];
+    const res = await this.client.scroll(this.collectionName, {
+      with_payload: true,
+      with_vector: false,
+      limit: 10_000,
+    });
+    return (res.points || []).map((p) => ({
+      id: typeof p.id === 'number' ? String(p.id) : (p.id as string),
+      metadata: (p.payload?.metadata as Record<string, unknown>) ?? {},
+    }));
   }
 
   async delete(params: { ids?: string[]; filter?: Record<string, unknown> }): Promise<void> {

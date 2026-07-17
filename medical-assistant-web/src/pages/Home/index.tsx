@@ -39,7 +39,7 @@ export default function Home() {
       </Row>
 
       <Card title="快速入口" className="mt-6">
-        <p>欢迎使用智能医生助手平台，请通过左侧菜单选择功能。</p>
+        <p>欢迎使用智能客服平台，请通过左侧菜单选择功能。</p>
       </Card>
     </div>
   );

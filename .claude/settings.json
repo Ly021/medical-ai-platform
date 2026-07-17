@@ -34,11 +34,20 @@
       "Bash(cd \"d:/test/medical-ai-platform\" && git rm --cached -f medical-assistant-server medical-assistant-web && rm -rf medical-assistant-server/.git medical-assistant-web/.git && git add -A && git status)",
       "Bash(gh auth *)",
       "Bash(git remote *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(curl -s -w '\\\\nHTTP %{http_code}' -H 'Cookie: acw_tc=27698c7f17834057183764524ea47644dd83288bb5100a8ca71ef5dc2ae5e3; device_id=v1_33rg9lrd4kejc_6336; Hm_lpvt_e7351028cde0d0ccb9ccdbe5fe531683=1783405770; Hm_lvt_e7351028cde0d0ccb9ccdbe5fe531683=1783405770; HMACCOUNT=58874569957C174D; persistent=HYLX12SrUh41bNd4ohCBsiXI5OhIpHthOJjklZCmSIxit2jDVJEBHU00zN2z5nhEQ/cvwAYIkJk1NP3logIpNg==; sajssdk_2015_cross_new_user=1; sensorsdata2015jssdkcross=%7B%22distinct_id%22%3A%22118287121%22%2C%22first_id%22%3A%2219f3b447219a15-055166786133e7-4c657b58-2073600-19f3b44721a11bb%22%2C%22props%22%3A%7B%22%24latest_traffic_source_type%22%3A%22%E7%9B%B4%E6%8E%A5%E6%B5%81%E9%87%8F%22%2C%22%24latest_search_keyword%22%3A%22%E6%9C%AA%E5%8F%96%E5%88%B0%E5%80%BC_%E7%9B%B4%E6%8E%A5%E6%89%93%E5%BC%80%22%2C%22%24latest_referrer%22%3A%22%22%7D%2C%22identities%22%3A%22eyIkaWRlbnRpdHlfY29va2llX2lkIjoiMTlmM2I0NDcyMTlhMTUtMDU1MTY2Nzg2MTMzZTctNGM2NTdiNTgtMjA3MzYwMC0xOWYzYjQ0NzIxYTExYmIiLCIkaWRlbnRpdHlfbG9naW5faWQiOiIxMTgyODcxMjEifQ%3D%3D%22%2C%22history_login_id%22%3A%7B%22name%22%3A%22%24identity_login_id%22%2C%22value%22%3A%22118287121%22%7D%2C%22%24device_id%22%3A%2219f3b447219a15-055166786133e7-4c657b58-2073600-19f3b44721a11bb%22%7D; sess=9KeLJaPbADRpCVH85gaPfNLZoHUEDBKfcjj9v3PWQC4VlPGukkv9F+5uEmYAoJj7g3uDL8MH/tHXmd5eZS0q9Up2HreJuEkU9AQToHSWLho=; sid=3806033; userid=118287121' 'https://tiku.fenbi.com/api/xingce/categories?filter=keypoint&app=web&kav=100&av=100&hav=100&version=3.0.0.0')",
+      "Bash(claude --version)",
+      "Bash(curl -s -X POST http://localhost:3000/rag/ingest -H \"Content-Type: application/json\" -d '{\"source\":\"data/medical-knowledge-demo.txt\"}')",
+      "Bash(curl -s http://localhost:3000/rag/documents)",
+      "Bash(curl -s http://localhost:5173/api/rag/documents)",
+      "Bash(curl -s -X POST http://localhost:3000/api/rag/ingest -H \"Content-Type: application/json\" -d '{\"source\":\"data/medical-knowledge-demo.txt\"}')",
+      "Bash(curl -s -X POST http://localhost:3000/api/rag/search -H \"Content-Type: application/json\" -d '{\"query\":\"二甲双胍的作用机制是什么\"}')",
+      "Bash(curl -s http://localhost:3000/api/rag/documents)"
     ],
     "additionalDirectories": [
       "d:\\test\\medical-assistant-server",
-      "d:\\test\\medical-ai-platform\\medical-assistant-server\\.git"
+      "d:\\test\\medical-ai-platform\\medical-assistant-server\\.git",
+      "C:\\Users\\Doctor\\AppData\\Roaming\\Code\\User"
     ]
   }
 }

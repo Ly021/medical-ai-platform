@@ -1,6 +1,8 @@
 import {
   Controller,
+  Get,
   Post,
+  Delete,
   Body,
   Res,
   UseInterceptors,
@@ -18,6 +20,7 @@ import { PipelineService } from './pipeline/pipeline.service';
 import { IngestDto } from './dto/ingest.dto';
 import { SearchDto } from './dto/search.dto';
 import { QueryDto } from './dto/query.dto';
+import { PreviewDto } from './dto/preview.dto';
 
 // @types/multer 未安装，自行声明文件类型
 interface UploadedFileType {
@@ -177,5 +180,104 @@ export class RagController {
     }
 
     res.end();
+  }
+
+  /** 列出所有已入库文档 */
+  @Get('documents')
+  async getDocuments() {
+    const data = await this.pipeline.getAllDocuments();
+    return { success: true, data };
+  }
+
+  /** 按 ID 数组删除文档 */
+  @Delete('documents')
+  async deleteDocuments(@Body() body: { ids: string[] }) {
+    if (!body.ids || !Array.isArray(body.ids) || body.ids.length === 0) {
+      throw new HttpException('请提供要删除的文档 ID 列表', HttpStatus.BAD_REQUEST);
+    }
+    await this.pipeline.deleteDocuments(body.ids);
+    return { success: true, deleted: body.ids.length };
+  }
+
+  /** 预览服务端路径文件的分段结果（不入库） */
+  @Post('preview')
+  async preview(@Body() dto: PreviewDto) {
+    try {
+      const chunks = await this.pipeline.preview(dto.source);
+      return {
+        success: true,
+        source: dto.source,
+        chunks: chunks.length,
+        preview: chunks.map((doc, i) => ({
+          index: i,
+          content: doc.pageContent.substring(0, 300),
+          charCount: doc.pageContent.length,
+        })),
+      };
+    } catch (err) {
+      throw new HttpException(
+        `预览失败: ${(err as Error).message}`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  /** 上传文件预览分段结果（不入库） */
+  @Post('preview/upload')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: (_req, _file, cb) => {
+          const dir = join(process.cwd(), 'uploads');
+          if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+          cb(null, dir);
+        },
+        filename: (_req, file, cb) => {
+          const name = `${Date.now()}-${Math.round(Math.random() * 1e9)}${extname(file.originalname)}`;
+          cb(null, name);
+        },
+      }),
+    }),
+  )
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary', description: '文档文件 (.txt/.md/.pdf)' },
+      },
+    },
+  })
+  async previewUpload(@UploadedFile() file: UploadedFileType) {
+    const allowed = ['.txt', '.md', '.pdf'];
+    if (!file) {
+      throw new HttpException(
+        `请上传文件（字段名: file），仅支持 ${allowed.join(', ')} 格式`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    const ext = extname(file.originalname).toLowerCase();
+    if (!allowed.includes(ext)) {
+      if (file.path && existsSync(file.path)) unlinkSync(file.path);
+      throw new HttpException(
+        `不支持的文件类型 "${ext}"，仅支持 ${allowed.join(', ')}`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    try {
+      const chunks = await this.pipeline.preview(file.path);
+      return {
+        success: true,
+        fileName: file.originalname,
+        chunks: chunks.length,
+        preview: chunks.map((doc, i) => ({
+          index: i,
+          content: doc.pageContent.substring(0, 300),
+          charCount: doc.pageContent.length,
+        })),
+      };
+    } finally {
+      if (file?.path && existsSync(file.path)) unlinkSync(file.path);
+    }
   }
 }

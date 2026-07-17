@@ -40,6 +40,7 @@ const mockVectorStore = {
   similaritySearchVector: jest.fn(),
   delete: jest.fn(),
   ensureCollection: jest.fn(),
+  getAllDocuments: jest.fn(),
 };
 
 const mockGenerator = {
@@ -311,5 +312,66 @@ describe('QueryPipeline', () => {
     expect(chunks[1]).toEqual({ type: 'status', content: '找到 1 个相关文档，正在生成回答...' });
     expect(chunks[2]).toEqual({ type: 'chunk', content: '答' });
     expect(chunks[3]).toEqual({ type: 'done' });
+  });
+});
+
+// ============================================================
+// PipelineService Tests —— 验证门面层的聚合/删除逻辑
+// ============================================================
+describe('PipelineService', () => {
+  let service: PipelineService;
+  const mockIngestionPipeline = { ingest: jest.fn(), preview: jest.fn() };
+  const mockQueryPipeline = { query: jest.fn(), queryStream: jest.fn(), search: jest.fn() };
+
+  beforeAll(async () => {
+    const mod = await Test.createTestingModule({
+      providers: [
+        PipelineService,
+        { provide: IngestionPipeline, useValue: mockIngestionPipeline },
+        { provide: QueryPipeline, useValue: mockQueryPipeline },
+        { provide: VECTOR_STORE_TOKEN, useValue: mockVectorStore },
+      ],
+    }).compile();
+    service = mod.get(PipelineService);
+    jest.clearAllMocks();
+  });
+
+  describe('getAllDocuments', () => {
+    it('should aggregate entries by metadata.source', async () => {
+      mockVectorStore.getAllDocuments.mockResolvedValue([
+        { id: '1', metadata: { source: '/data/foo.txt' } },
+        { id: '2', metadata: { source: '/data/foo.txt' } },
+        { id: '3', metadata: { source: '/data/bar.md' } },
+      ]);
+
+      const result = await service.getAllDocuments();
+
+      expect(result).toHaveLength(2);
+      const foo = result.find((d) => d.filename === 'foo.txt')!;
+      expect(foo.chunks).toBe(2);
+      expect(foo.ids).toEqual(['1', '2']);
+      const bar = result.find((d) => d.filename === 'bar.md')!;
+      expect(bar.chunks).toBe(1);
+      expect(bar.ids).toEqual(['3']);
+    });
+
+    it('should handle empty result', async () => {
+      mockVectorStore.getAllDocuments.mockResolvedValue([]);
+      const result = await service.getAllDocuments();
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('deleteDocuments', () => {
+    it('should call vectorStore.delete with ids', async () => {
+      await service.deleteDocuments(['1', '2']);
+      expect(mockVectorStore.delete).toHaveBeenCalledWith({ ids: ['1', '2'] });
+    });
+
+    it('should skip delete for empty array', async () => {
+      jest.clearAllMocks();
+      await service.deleteDocuments([]);
+      expect(mockVectorStore.delete).not.toHaveBeenCalled();
+    });
   });
 });

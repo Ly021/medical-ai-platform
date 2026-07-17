@@ -76,6 +76,10 @@ export class MemoryVectorStore implements IVectorStore {
       });
   }
 
+  async getAllDocuments(): Promise<Array<{ id: string; metadata: Record<string, unknown> }>> {
+    return this.entries.map((e) => ({ id: e.id, metadata: { ...e.doc.metadata } }));
+  }
+
   /** 按 ID 删除 */
   async delete(params: { ids?: string[] }): Promise<void> {
     if (params.ids) {

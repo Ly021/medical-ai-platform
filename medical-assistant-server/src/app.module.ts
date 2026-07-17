@@ -1,14 +1,28 @@
 import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CatsModule } from './cats/cats.module';
 import { AgentModule } from './agent/agent.module';
 import { RagModule } from './rag/rag.module';
+import { ConversationsModule } from './conversations/conversations.module.js';
 import { LoggerMiddleware } from './common/middleware/logger.middleware';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), CatsModule, AgentModule, RagModule.register()],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    TypeOrmModule.forRoot({
+      type: 'better-sqlite3',
+      database: 'data/conversations.db',
+      entities: [__dirname + '/**/*.entity{.ts,.js}'],
+      synchronize: true,
+    }),
+    CatsModule,
+    AgentModule,
+    RagModule.register(),
+    ConversationsModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

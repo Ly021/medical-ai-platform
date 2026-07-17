@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { createAgent, initChatModel, tool } from 'langchain';
 import { MemorySaver } from '@langchain/langgraph';
 import * as z from 'zod';
-import { KnowledgeService } from './knowledge.service';
+import { PipelineService } from '../rag/pipeline/pipeline.service';
 import { PromptService } from './prompt.service';
 
 @Injectable()
@@ -12,7 +12,7 @@ export class AgentService implements OnModuleInit {
   private initPromise: Promise<void>;
 
   constructor(
-    private readonly knowledge: KnowledgeService,
+    private readonly pipeline: PipelineService,
     private readonly config: ConfigService,
     private readonly prompt: PromptService,
   ) {}
@@ -24,7 +24,7 @@ export class AgentService implements OnModuleInit {
   }
 
   private async initAgent() {
-    const model = await initChatModel('openai:qwen-turbo', {
+    const model = await initChatModel('openai:qwen-vl-plus', {
       temperature: 0.5,
       maxTokens: 4096,
       apiKey: this.config.get('DASHSCOPE_API_KEY'),
@@ -61,10 +61,16 @@ export class AgentService implements OnModuleInit {
     );
 
     const searchKnowledge = tool(
-      async (input) => this.knowledge.search(input.query),
+      async (input) => {
+        const result = await this.pipeline.query(input.query);
+        const sources = result.sources
+          .map((doc, i) => `[${i + 1}] ${doc.pageContent.slice(0, 200)}`)
+          .join('\n');
+        return `回答：${result.answer}\n\n参考来源：\n${sources}`;
+      },
       {
         name: 'search_knowledge',
-        description: 'Search local knowledge base for information about NestJS, LangChain, Agent, RAG, etc.',
+        description: 'Search the medical knowledge base via RAG to retrieve and answer questions based on ingested documents.',
         schema: z.object({
           query: z.string().describe('Search query'),
         }),
@@ -81,7 +87,10 @@ export class AgentService implements OnModuleInit {
     console.log('[AgentService] Agent 初始化完成');
   }
 
-  async chat(content: string, threadId = 'default'): Promise<string> {
+  async chat(
+    content: string | Array<{ type: string; text?: string; image_url?: { url: string } }>,
+    threadId = 'default',
+  ): Promise<string> {
     if (!this.agent) return 'AI 服务正在初始化中，请稍后重试。';
     const result = await this.agent.invoke(
       { messages: [{ role: 'user', content }] },
@@ -94,7 +103,10 @@ export class AgentService implements OnModuleInit {
       : JSON.stringify(lastMsg?.content);
   }
 
-  async *streamChat(content: string, threadId = 'default') {
+  async *streamChat(
+    content: string | Array<{ type: string; text?: string; image_url?: { url: string } }>,
+    threadId = 'default',
+  ) {
     if (!this.agent) {
       yield { type: 'error', content: 'AI 服务正在初始化中，请稍后重试。' };
       return;

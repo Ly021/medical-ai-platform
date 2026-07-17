@@ -57,4 +57,7 @@ export interface IVectorStore {
    * @param vectorSize - 向量维度
    */
   ensureCollection(collectionName: string, vectorSize: number): Promise<void>;
+
+  /** 获取所有已存储的文档条目（id + metadata，不含向量和正文） */
+  getAllDocuments(): Promise<Array<{ id: string; metadata: Record<string, unknown> }>>;
 }
